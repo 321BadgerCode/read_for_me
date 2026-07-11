@@ -30,8 +30,10 @@ function buildPrompt(pageData) {
   ].join('\n');
 }
 
-async function callGemini(apiKey, prompt) {
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+
+async function requestGemini(apiKey, prompt, model) {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -44,10 +46,33 @@ async function callGemini(apiKey, prompt) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Gemini request failed (${response.status}): ${errorText}`);
+    return { ok: false, status: response.status, errorText };
   }
 
   const data = await response.json();
+  return { ok: true, data };
+}
+
+async function callGemini(apiKey, prompt) {
+  let lastError = null;
+  let data = null;
+  for (const model of GEMINI_MODELS) {
+    const result = await requestGemini(apiKey, prompt, model);
+    if (result.ok) {
+      data = result.data;
+      break;
+    }
+
+    lastError = `Gemini request failed (${result.status}) for model ${model}: ${result.errorText}`;
+    if (result.status !== 404) {
+      throw new Error(lastError);
+    }
+  }
+
+  if (!data) {
+    throw new Error(lastError || 'Gemini request failed for all configured models.');
+  }
+
   const text = (data.candidates || [])
     .flatMap((candidate) => (((candidate || {}).content || {}).parts || []))
     .map((part) => part.text || '')
