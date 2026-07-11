@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Read For Me</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Read For Me</h1>
+      <label for="apiKey">Gemini API key</label>
+      <div class="row">
+        <input id="apiKey" type="password" placeholder="AIza..." autocomplete="off" />
+        <button id="saveKey" type="button">Save</button>
+      </div>
+      <button id="analyze" type="button">Analyze this tab</button>
+      <p id="status" role="status"></p>
+      <pre id="output"></pre>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
